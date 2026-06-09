@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sorting Benchmark</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e2a;
+    --border: #252a38;
+    --accent: #4f8ef7;
+    --accent2: #7c3aed;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --green: #10b981;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    --font-sans: 'Inter', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+
+  header span {
+    font-size: 13px;
+    color: var(--muted);
+    margin-left: 4px;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 36px 24px 0;
+    display: grid;
+    gap: 24px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+
+  /* ── Input section ── */
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: end;
+  }
+
+  label {
+    font-size: 13px;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 12px 14px;
+    resize: none;
+    height: 80px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  textarea:focus { border-color: var(--accent); }
+
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .gen-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  input[type="number"] {
+    width: 80px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 10px 12px;
+    outline: none;
+  }
+
+  input[type="number"]:focus { border-color: var(--accent); }
+
+  button {
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 13px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  button:active { transform: scale(0.97); }
+
+  .btn-ghost {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 16px;
+    white-space: nowrap;
+  }
+
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    padding: 12px 28px;
+    font-size: 14px;
+    width: 100%;
+  }
+
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ── Status bar ── */
+  .status {
+    font-size: 13px;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    padding: 10px 14px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot.red { background: var(--red); }
+  .dot.pulse {
+    background: var(--accent);
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── Chart ── */
+  .chart-wrap {
+    position: relative;
+    height: 300px;
+  }
+
+  /* ── Results table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  thead th {
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+
+  tbody td {
+    padding: 14px 16px;
+    vertical-align: middle;
+  }
+
+  .algo-name {
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .color-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .time-val {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+  }
+
+  .badge-red    { background: rgba(239,68,68,0.12);   color: var(--red); }
+  .badge-yellow { background: rgba(245,158,11,0.12);  color: var(--yellow); }
+  .badge-green  { background: rgba(16,185,129,0.12);  color: var(--green); }
+  .badge-blue   { background: rgba(79,142,247,0.12);  color: var(--accent); }
+
+  .rank {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    width: 24px;
+  }
+
+  .rank-1 { color: #fbbf24; font-weight: 700; }
+  .rank-2 { color: #9ca3af; font-weight: 600; }
+  .rank-3 { color: #c47c35; font-weight: 600; }
+
+  .bar-bg {
+    background: var(--border);
+    border-radius: 4px;
+    height: 4px;
+    width: 100%;
+    max-width: 160px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+
+  /* ── Empty state ── */
+  .empty {
+    text-align: center;
+    padding: 48px 0;
+    color: var(--muted);
+  }
+
+  .empty .icon { font-size: 36px; margin-bottom: 12px; }
+  .empty p { font-size: 14px; }
+
+  /* ── Footer note ── */
+  .footnote {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 12px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⚡</div>
+  <div>
+    <h1>Sorting Benchmark <span>— Algorithm Performance Analyzer</span></h1>
+  </div>
+</header>
+
+<main>
+
+  <!-- Input Card -->
+  <div class="card">
+    <div class="card-title">Input</div>
+    <div class="input-grid">
+      <div>
+        <label>Enter numbers (comma-separated)</label>
+        <textarea id="numInput" placeholder="e.g. 38, 27, 43, 3, 9, 82, 10, 1, 5, 63 ..."></textarea>
+      </div>
+      <div class="controls">
+        <div class="gen-row">
+          <input type="number" id="genCount" value="1000" min="10" max="50000" />
+          <button class="btn-ghost" onclick="generateRandom()">↺ Random</button>
+        </div>
+        <button class="btn-primary" id="runBtn" onclick="runBenchmark()">▶ Run Benchmark</button>
+      </div>
+    </div>
+    <div class="status" id="status">
+      <div class="dot"></div>
+      <span>Ready — enter numbers or generate a random array.</span>
+    </div>
+    <p class="footnote">Tip: use 1,000–10,000 numbers to see meaningful timing differences between O(n²) and O(n log n) algorithms.</p>
+  </div>
+
+  <!-- Chart Card -->
+  <div class="card" id="chartCard" style="display:none">
+    <div class="card-title">Execution Time (milliseconds)</div>
+    <div class="chart-wrap">
+      <canvas id="chart"></canvas>
+    </div>
+  </div>
+
+  <!-- Results Table Card -->
+  <div class="card" id="tableCard" style="display:none">
+    <div class="card-title">Results</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36px">#</th>
+          <th>Algorithm</th>
+          <th>Time (ms)</th>
+          <th>Relative</th>
+          <th>Complexity</th>
+          <th>Class</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<script>
+const COMPLEXITY = {
+  "Bubble Sort":    { big_o: "O(n²)",        cls: "Quadratic",    badge: "badge-red"    },
+  "Selection Sort": { big_o: "O(n²)",        cls: "Quadratic",    badge: "badge-red"    },
+  "Insertion Sort": { big_o: "O(n²)",        cls: "Quadratic",    badge: "badge-red"    },
+  "Merge Sort":     { big_o: "O(n log n)",   cls: "Log-linear",   badge: "badge-green"  },
+  "Quick Sort":     { big_o: "O(n log n)*",  cls: "Log-linear",   badge: "badge-green"  },
+  "Counting Sort":  { big_o: "O(n + k)",     cls: "Linear",       badge: "badge-blue"   },
+  "Radix Sort":     { big_o: "O(nk)",        cls: "Linear",       badge: "badge-blue"   },
+};
+
+const COLORS = [
+  "#4f8ef7","#7c3aed","#10b981","#f59e0b","#ef4444","#06b6d4","#ec4899"
+];
+
+let chartInstance = null;
+
+function setStatus(msg, state = "idle") {
+  const el = document.getElementById("status");
+  const dot = el.querySelector(".dot");
+  dot.className = "dot";
+  if (state === "running") dot.classList.add("pulse");
+  if (state === "ok")      dot.classList.add("green");
+  if (state === "err")     dot.classList.add("red");
+  el.querySelector("span").textContent = msg;
+}
+
+function generateRandom() {
+  const n = parseInt(document.getElementById("genCount").value) || 1000;
+  const arr = Array.from({length: n}, () => Math.floor(Math.random() * 100000));
+  document.getElementById("numInput").value = arr.join(", ");
+  setStatus(`Generated ${n} random numbers. Ready to run.`);
+}
+
+async function runBenchmark() {
+  const raw = document.getElementById("numInput").value.trim();
+  if (!raw) { setStatus("Please enter numbers or generate a random array.", "err"); return; }
+
+  const numbers = raw.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+  if (numbers.length < 2) { setStatus("Need at least 2 valid numbers.", "err"); return; }
+
+  const btn = document.getElementById("runBtn");
+  btn.disabled = true;
+  setStatus(`Running benchmark on ${numbers.length} numbers…`, "running");
+
+  try {
+    const res = await fetch("http://localhost:8080/benchmark", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ numbers })
+    });
+
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
+
+    setStatus(`Completed — ${numbers.length} elements benchmarked across 7 algorithms.`, "ok");
+    renderResults(data);
+  } catch (e) {
+    setStatus("Could not connect to server. Make sure BenchmarkServer.java is running on port 8080.", "err");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderResults(data) {
+  // Sort by time ascending for ranking
+  const sorted = Object.entries(data).sort((a, b) => a[1] - b[1]);
+  const maxTime = sorted[sorted.length - 1][1];
+  const names = Object.keys(data);
+  const times = Object.values(data);
+
+  // ── Chart ──────────────────────────────────────────────────────────────────
+  document.getElementById("chartCard").style.display = "block";
+  if (chartInstance) chartInstance.destroy();
+
+  chartInstance = new Chart(document.getElementById("chart"), {
+    type: "bar",
+    data: {
+      labels: names,
+      datasets: [{
+        label: "Time (ms)",
+        data: times,
+        backgroundColor: COLORS,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.parsed.y} ms  —  ${COMPLEXITY[ctx.label]?.big_o || ""}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: "#6b7280", font: { family: "Inter, sans-serif", size: 12 } },
+          grid: { color: "#252a38" }
+        },
+        y: {
+          ticks: { color: "#6b7280", font: { family: "JetBrains Mono, monospace", size: 11 },
+                   callback: v => v + " ms" },
+          grid: { color: "#252a38" }
+        }
+      }
+    }
+  });
+
+  // ── Table ──────────────────────────────────────────────────────────────────
+  document.getElementById("tableCard").style.display = "block";
+  const tbody = document.getElementById("resultsBody");
+  tbody.innerHTML = "";
+
+  sorted.forEach(([name, ms], idx) => {
+    const rank = idx + 1;
+    const pct = maxTime > 0 ? (ms / maxTime) * 100 : 0;
+    const info = COMPLEXITY[name] || { big_o: "—", cls: "—", badge: "" };
+    const color = COLORS[names.indexOf(name)];
+
+    const rankCls = rank === 1 ? "rank-1" : rank === 2 ? "rank-2" : rank === 3 ? "rank-3" : "";
+
+    tbody.innerHTML += `
+      <tr>
+        <td class="rank ${rankCls}">${rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : rank}</td>
+        <td>
+          <div class="algo-name">
+            <div class="color-dot" style="background:${color}"></div>
+            ${name}
+          </div>
+        </td>
+        <td><span class="time-val" style="color:${color}">${ms}</span> <span style="font-size:12px;color:var(--muted)">ms</span></td>
+        <td>
+          <div class="bar-bg">
+            <div class="bar-fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+        </td>
+        <td><span class="badge ${info.badge}">${info.big_o}</span></td>
+        <td style="color:var(--muted);font-size:13px">${info.cls}</td>
+      </tr>`;
+  });
+}
+</script>
+</body>
+</html>
